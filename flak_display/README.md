@@ -26,12 +26,21 @@ python main.py
 On first run a `flak_config.json` is created next to `main.py` with
 defaults you can edit from the Settings window.
 
+## Icons
+
+`assets/` ships with 5 drawn placeholder icons (`helmet.png`,
+`chest_plate.png`, `gauntlet.png`, `leggings.png`, `boots.png`) generated
+by `generate_icons.py` so the HUD looks right out of the box. Swap in
+real game art any time by browsing to your own image in Settings — the
+image just needs a transparent (or matching) background so it blends
+into the HUD.
+
 ## Configuring it
 
 Open **Settings** from the control window and, for each armor piece:
 
-1. **Icon image** — browse to the image you want shown for that piece.
-   Until you set one, a placeholder square is shown.
+1. **Icon image** — browse to the image you want shown for that piece
+   (defaults to the placeholder icon in `assets/`).
 2. **X / Y / Width / Height** — the screen region ARK draws that piece's
    durability number in (e.g. the inventory tooltip). Hover your mouse
    over that spot in-game and read the coordinates from the "Coordinate

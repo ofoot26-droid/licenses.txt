@@ -3,8 +3,11 @@ import json
 import os
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "flak_config.json")
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
+# (display name, default placeholder icon filename in assets/)
 PIECE_NAMES = ["Helmet", "Chest Plate", "Gauntlet", "Leggings", "Boots"]
+PIECE_ICON_FILES = ["helmet.png", "chest_plate.png", "gauntlet.png", "leggings.png", "boots.png"]
 
 # Ordered low -> high. Each entry is (color_key, display_label, hex_color).
 COLOR_STOPS = [
@@ -32,8 +35,12 @@ DEFAULT_CONFIG = {
     },
     "tesseract_cmd": "",
     "pieces": [
-        {"name": name, "image_path": "", "region": [0, 0, 60, 20]}
-        for name in PIECE_NAMES
+        {
+            "name": name,
+            "image_path": os.path.join(ASSETS_DIR, icon_file),
+            "region": [0, 0, 60, 20],
+        }
+        for name, icon_file in zip(PIECE_NAMES, PIECE_ICON_FILES)
     ],
 }
 
