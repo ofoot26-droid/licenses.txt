@@ -1,0 +1,3 @@
+__pycache__/
+*.pyc
+flak_display/flak_config.json
