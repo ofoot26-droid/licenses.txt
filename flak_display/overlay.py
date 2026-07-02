@@ -6,13 +6,10 @@ from PIL import Image, ImageDraw, ImageFont, ImageTk
 
 from color_utils import get_color_for_value
 from ocr import read_value
+import layout
 import mss
 
 TRANSPARENT_KEY = "#010101"  # background color treated as transparent (Windows only)
-BASE_ICON = 48
-BASE_BAR_H = 8
-BASE_GAP = 6
-BASE_PAD = 10
 POLL_MS = 750
 
 
@@ -80,18 +77,8 @@ class FlakOverlay:
         return max(0.5, min(3.0, float(cfg.get("hud_scale", 1.0))))
 
     def _dims(self):
-        scale = self._scale()
-        icon = int(BASE_ICON * scale)
-        bar_h = int(BASE_BAR_H * scale)
-        gap = int(BASE_GAP * scale)
-        pad = int(BASE_PAD * scale)
         n = len(self.get_config()["pieces"])
-        width = pad * 2 + icon
-        height = pad * 2 + n * icon + (n - 1) * gap + n * (bar_h + 4)
-        if self.expanded:
-            height += n * 14  # room for the numeric value label per row
-            width = max(width, pad * 2 + icon + 70)
-        return icon, bar_h, gap, pad, width, height
+        return layout.dims(self._scale(), n, self.expanded)
 
     def _reposition(self):
         icon, bar_h, gap, pad, width, height = self._dims()
