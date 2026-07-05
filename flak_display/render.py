@@ -62,8 +62,11 @@ def render_hud_frame(cfg, values, expanded, load_icon, key_color=None):
         row_h = icon + bar_h + 4
         if expanded:
             label = f"{piece['name']}: {value if value is not None else '?'}"
-            draw.text((pad, bar_y + bar_h + 12), label, fill=(255, 255, 255, 255), font=_font(11))
-            row_h += 14
+            draw.text(
+                (pad, bar_y + bar_h + layout.LABEL_TEXT_OFFSET),
+                label, fill=(255, 255, 255, 255), font=_font(11),
+            )
+            row_h += layout.EXPANDED_ROW_EXTRA
         y += row_h + gap
 
     return frame

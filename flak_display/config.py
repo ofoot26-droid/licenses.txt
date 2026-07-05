@@ -5,9 +5,10 @@ import os
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "flak_config.json")
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
-# (display name, default placeholder icon filename in assets/)
+# (display name, default icon filename in assets/ — the real game art the
+# user uploaded; backgrounds are stripped automatically at load time)
 PIECE_NAMES = ["Helmet", "Chest Plate", "Gauntlet", "Leggings", "Boots"]
-PIECE_ICON_FILES = ["helmet.png", "chest_plate.png", "gauntlet.png", "leggings.png", "boots.png"]
+PIECE_ICON_FILES = ["flakhelm.jpg", "flakchest.jpg", "flakgaunt.jpg", "flakleg.jpg", "flakboot.jpg"]
 
 # Ordered low -> high. Each entry is (color_key, display_label, hex_color).
 COLOR_STOPS = [
