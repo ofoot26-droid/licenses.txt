@@ -6,6 +6,15 @@ BASE_BAR_H = 8
 BASE_GAP = 6
 BASE_PAD = 10
 
+# The panel behind the stacked pieces: a solid, rounded-corner card. Areas
+# outside its rounded corners are left as the window's colorkey so the
+# HUD's silhouette itself reads as a rounded rectangle floating over the
+# game, rather than a hard-edged box.
+PANEL_RADIUS = 14
+PANEL_FILL = (24, 24, 26, 255)
+PANEL_OUTLINE = (75, 78, 70, 255)
+PANEL_OUTLINE_W = 2
+
 
 def scale_clamped(hud_scale):
     return max(0.5, min(3.0, float(hud_scale)))

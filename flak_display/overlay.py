@@ -1,15 +1,18 @@
-"""The transparent, click-through Flak durability HUD."""
+"""The transparent, click-through Flak durability HUD: a rounded-rect
+panel with the 5 armor pieces stacked vertically inside it, floating
+over the game."""
 import platform
 import tkinter as tk
 
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-from color_utils import get_color_for_value
+from bg_remove import remove_background
 from ocr import read_value
-import layout
 import mss
+import render
 
-TRANSPARENT_KEY = "#010101"  # background color treated as transparent (Windows only)
+TRANSPARENT_KEY_HEX = "#010101"  # background color treated as transparent (Windows only)
+TRANSPARENT_KEY_RGB = (1, 1, 1)
 POLL_MS = 750
 
 
@@ -21,8 +24,7 @@ def _make_placeholder_icon(label, size):
         font = ImageFont.load_default()
     except Exception:
         font = None
-    text = label[:1]
-    draw.text((size / 2, size / 2), text, fill=(220, 220, 220, 255), anchor="mm", font=font)
+    draw.text((size / 2, size / 2), label[:1], fill=(220, 220, 220, 255), anchor="mm", font=font)
     return img
 
 
@@ -44,17 +46,18 @@ class FlakOverlay:
         self.get_config = get_config
         self.expanded = False
         self._icon_cache = {}
-        self._photo_refs = []
+        self._frame_photo = None  # keep a live reference so Tk doesn't GC it
 
         self.root = tk.Toplevel()
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
-        self.root.configure(bg=TRANSPARENT_KEY)
+        self.root.configure(bg=TRANSPARENT_KEY_HEX)
         if platform.system() == "Windows":
-            self.root.attributes("-transparentcolor", TRANSPARENT_KEY)
+            self.root.attributes("-transparentcolor", TRANSPARENT_KEY_HEX)
 
-        self.canvas = tk.Canvas(self.root, bg=TRANSPARENT_KEY, highlightthickness=0)
+        self.canvas = tk.Canvas(self.root, bg=TRANSPARENT_KEY_HEX, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
+        self._canvas_image_id = None
 
         self._sct = mss.mss()
 
@@ -66,29 +69,9 @@ class FlakOverlay:
             except Exception:
                 pass
 
-        self._reposition()
         self._tick_ocr()
         self._tick_render()
         self._tick_hotkey()
-
-    # -- layout -----------------------------------------------------------
-    def _scale(self):
-        cfg = self.get_config()
-        return max(0.5, min(3.0, float(cfg.get("hud_scale", 1.0))))
-
-    def _dims(self):
-        n = len(self.get_config()["pieces"])
-        return layout.dims(self._scale(), n, self.expanded)
-
-    def _reposition(self):
-        icon, bar_h, gap, pad, width, height = self._dims()
-        screen_w = self.root.winfo_screenwidth()
-        screen_h = self.root.winfo_screenheight()
-        margin = 12
-        x = screen_w - width - margin
-        y = (screen_h - height) // 2
-        self.root.geometry(f"{width}x{height}+{x}+{y}")
-        self.canvas.config(width=width, height=height)
 
     # -- data ---------------------------------------------------------------
     def _tick_ocr(self):
@@ -110,62 +93,46 @@ class FlakOverlay:
             pass
         self.root.after(80, self._tick_hotkey)
 
-    # -- rendering ------------------------------------------------------
-    def _get_icon(self, piece, size):
+    # -- icons ------------------------------------------------------------
+    def _load_icon(self, piece, size):
         key = (piece["name"], piece.get("image_path", ""), size)
         if key in self._icon_cache:
             return self._icon_cache[key]
         path = piece.get("image_path", "")
         try:
-            if path:
-                img = Image.open(path).convert("RGBA").resize((size, size), Image.LANCZOS)
-            else:
+            if not path:
                 raise FileNotFoundError
+            img = Image.open(path)
+            img = remove_background(img)
+            img = img.resize((size, size), Image.LANCZOS)
         except Exception:
             img = _make_placeholder_icon(piece["name"], size)
-        photo = ImageTk.PhotoImage(img)
-        self._icon_cache[key] = photo
-        return photo
+        self._icon_cache[key] = img
+        return img
+
+    # -- rendering ------------------------------------------------------
+    def _reposition(self, width, height):
+        screen_w = self.root.winfo_screenwidth()
+        screen_h = self.root.winfo_screenheight()
+        margin = 12
+        x = screen_w - width - margin
+        y = (screen_h - height) // 2
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+        self.canvas.config(width=width, height=height)
 
     def _tick_render(self):
-        self._reposition()
         cfg = self.get_config()
-        icon, bar_h, gap, pad, width, height = self._dims()
-        self.canvas.delete("all")
-        self._photo_refs.clear()
-
         values = getattr(self, "_latest_values", [None] * len(cfg["pieces"]))
-        y = pad
-        for piece, value in zip(cfg["pieces"], values):
-            photo = self._get_icon(piece, icon)
-            self._photo_refs.append(photo)
-            self.canvas.create_image(pad, y, image=photo, anchor="nw")
 
-            color = get_color_for_value(
-                value, cfg["thresholds"], cfg["low_value"], cfg["high_value"]
-            )
-            bar_y = y + icon + 3
-            self.canvas.create_rectangle(
-                pad, bar_y, pad + icon, bar_y + bar_h,
-                fill="#222222", outline="#000000",
-            )
-            if value is not None:
-                span = max(1, cfg["high_value"] - cfg["low_value"])
-                frac = max(0.0, min(1.0, (value - cfg["low_value"]) / span))
-                fill_w = int(icon * frac)
-                if fill_w > 0:
-                    self.canvas.create_rectangle(
-                        pad, bar_y, pad + fill_w, bar_y + bar_h,
-                        fill=color, outline="",
-                    )
-            row_h = icon + bar_h + 4
-            if self.expanded:
-                label = f"{piece['name']}: {value if value is not None else '?'}"
-                self.canvas.create_text(
-                    pad, bar_y + bar_h + 12, text=label, fill="#FFFFFF",
-                    anchor="nw", font=("Segoe UI", 8),
-                )
-                row_h += 14
-            y += row_h + gap
+        frame = render.render_hud_frame(
+            cfg, values, self.expanded, self._load_icon, key_color=TRANSPARENT_KEY_RGB
+        )
+        self._reposition(frame.width, frame.height)
+
+        self._frame_photo = ImageTk.PhotoImage(frame)
+        if self._canvas_image_id is None:
+            self._canvas_image_id = self.canvas.create_image(0, 0, image=self._frame_photo, anchor="nw")
+        else:
+            self.canvas.itemconfig(self._canvas_image_id, image=self._frame_photo)
 
         self.root.after(150, self._tick_render)

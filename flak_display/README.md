@@ -1,8 +1,10 @@
 # Flak Display
 
-A small, transparent, always-on-top overlay for ARK: Survival Ascended that
-shows live durability for your Flak armor (Helmet, Chest Plate, Gauntlet,
-Leggings, Boots) as a color bar under each piece's icon.
+A small, always-on-top overlay for ARK: Survival Ascended: a vertical
+rounded-rectangle panel, floating on the right edge of your screen, with
+the 5 Flak armor pieces (Helmet, Chest Plate, Gauntlet, Leggings, Boots)
+stacked inside it, each showing a color bar that tracks its durability.
+Everything outside the rounded panel is fully invisible over the game.
 
 ## Requirements
 
@@ -30,10 +32,15 @@ defaults you can edit from the Settings window.
 
 `assets/` ships with 5 drawn placeholder icons (`helmet.png`,
 `chest_plate.png`, `gauntlet.png`, `leggings.png`, `boots.png`) generated
-by `generate_icons.py` so the HUD looks right out of the box. Swap in
-real game art any time by browsing to your own image in Settings — the
-image just needs a transparent (or matching) background so it blends
-into the HUD.
+by `generate_icons.py` so the HUD looks right out of the box.
+
+Swap in real game art any time by browsing to your own image in
+Settings, or by dropping a file into `assets/` and pointing a piece's
+"Icon image" at it. You do **not** need to remove the background
+yourself first: `bg_remove.py` automatically flood-fills away
+whatever flat color surrounds the icon (e.g. a white product-shot
+background) every time an image loads, so any picture with a plain
+background will blend cleanly into the panel.
 
 ## Configuring it
 
