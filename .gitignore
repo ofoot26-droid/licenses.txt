@@ -1,0 +1,15 @@
+# Runtime state (paper portfolio, trade log, logs)
+state/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Local overrides
+config.local.json
+.env

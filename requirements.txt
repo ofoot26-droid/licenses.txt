@@ -1,0 +1,6 @@
+# Runtime
+tradingview-ta>=3.3.0
+requests>=2.28.0
+
+# Dev / tests
+pytest>=7.0.0
